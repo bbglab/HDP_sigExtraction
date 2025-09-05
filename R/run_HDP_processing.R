@@ -68,8 +68,14 @@ plot_hdp_exposure_boxplot <- function(hdpsample, dpindices, component_names = NU
   # exclude component 0
   exposures <- exposures[-1,]
   
+  if (is.null(dim(exposures))) {
+    exposures <- matrix(exposures, ncol = length(exposures), nrow = 1)
+  }
+
+  print(head(exposures))
   # prepare data for plotting
   plot_data           <- reshape2::melt(exposures)
+  print(head(plot_data))
   colnames(plot_data)[1:2] <- c('Component', 'Sample')
   plot_data$sig_active <- plot_data$value > sig_active_cutoff
   
@@ -154,7 +160,7 @@ plot_hdp_exposure_group <- function(hdpsample, group_df, incl_nonsig = T, compon
   print(dim(exposures))
   print(group_df$sample)
   print(colnames(exposures))
-  
+
   colnames(exposures) <- group_df$sample
   
   # Number of data items per DP
