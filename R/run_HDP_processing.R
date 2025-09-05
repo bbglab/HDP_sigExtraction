@@ -144,10 +144,17 @@ plot_hdp_exposure_group <- function(hdpsample, group_df, incl_nonsig = T, compon
     # exclude component 0
     exposures <- exposures[-1,]
   }
-
+  print(exposures)
+  print(dim(exposures))
   if (is.null(dim(exposures))) {
     exposures <- matrix(exposures, ncol = length(exposures), nrow = 1)
   }
+
+  print(exposures)
+  print(dim(exposures))
+  print(group_df$sample)
+  print(colnames(exposures))
+  
   colnames(exposures) <- group_df$sample
   
   # Number of data items per DP
