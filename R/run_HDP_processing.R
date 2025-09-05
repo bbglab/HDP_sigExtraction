@@ -74,9 +74,7 @@ plot_hdp_exposure_boxplot <- function(hdpsample, dpindices, component_names = NU
 
   # prepare data for plotting
   plot_data           <- reshape2::melt(exposures)
-  print(head(plot_data))
   colnames(plot_data)[1:2] <- c('Component', 'Sample')
-  print(head(plot_data))
   plot_data$sig_active <- plot_data$value > sig_active_cutoff
   
   cohort_threshold_number <- cohort_threshold * ncol(exposures)
@@ -731,6 +729,7 @@ dev.off()
 
 
 ####### save results #######
+print("Storing data")
 hdp_results <- hdpsample
 save(hdp_results, file = paste0(output_dir, 'hdp_results.RData'))
 
@@ -745,6 +744,9 @@ write.table(signatures, file = paste0(output_dir, 'components.txt'), sep ="\t")
 
 #exclude Component 0 and components with low activity
 signatures <- signatures[,!colnames(signatures) %in% c('0', exclude_components)]
+if (is.null(dim(signatures))) {
+  signatures <- matrix(signatures, nrow = length(signatures), ncol = 1)
+}
 
 if(priors_file != 'NA'){
   prior_names <- grep('P', colnames(signatures), value = T)
@@ -780,8 +782,16 @@ for (i in 1:length(nonsig)){
   signf_exposures[i, nonsig[[i]]] <- 0
 }
 
+if (is.null(dim(signf_exposures))) {
+  signf_exposures <- matrix(signf_exposures, nrow = length(signf_exposures), ncol = 1)
+}
+
 exposures       <- exposures[,!colnames(exposures) %in% c('0', exclude_components)]
 signf_exposures <- signf_exposures[,!colnames(signf_exposures) %in% c('0', exclude_components)]
+
+if (is.null(dim(exposures))) {
+  exposures <- matrix(exposures, nrow = length(exposures), ncol = 1)
+}
 
 if (is.null(dim(signf_exposures))) {
   signf_exposures <- matrix(signf_exposures, nrow = length(signf_exposures), ncol = 1)
