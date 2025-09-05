@@ -146,7 +146,7 @@ plot_hdp_exposure_group <- function(hdpsample, group_df, incl_nonsig = T, compon
   }
 
   if (is.null(dim(exposures))) {
-    exposures <- matrix(exposures, nrow = length(exposures), ncol = 1)
+    exposures <- matrix(exposures, ncol = length(exposures), nrow = 1)
   }
   colnames(exposures) <- group_df$sample
   
