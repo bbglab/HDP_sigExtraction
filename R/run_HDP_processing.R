@@ -60,7 +60,7 @@ plot_hdp_exposure_boxplot <- function(hdpsample, dpindices, component_names = NU
     exposures[nonsig[[i]],i] <- 0
   }
   
-  #add component_names if provided
+  # add component_names if provided
   if(!is.null(component_names)){
     rownames(exposures) <- component_names
   }
@@ -627,22 +627,29 @@ if(ncol(samples_input) == 48){
 
 
 # plot exposures
-pdf(paste0(output_dir, 'componentExposures.pdf'), width = 15, height = 7)
-plot_dp_comp_exposure(hdpsample, main_text="Exposures (excluding non-significant)",
-                      dpindices=dpindices,
-                      col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
-                      incl_nonsig = F,
-                      incl_numdata_plot = T,
-                      ylab_numdata = 'Count', ylab_exp = 'Exposure',
-                      leg.title = 'Components')
-plot_dp_comp_exposure(hdpsample, main_text="Exposures (including non-significant)",
-                      dpindices=dpindices,
-                      col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
-                      incl_nonsig = T,
-                      incl_numdata_plot = T,
-                      ylab_numdata = 'Count', ylab_exp = 'Exposure',
-                      leg.title = 'Components')
-dev.off()
+
+tryCatch({
+  pdf(paste0(output_dir, 'componentExposures.pdf'), width = 15, height = 7)
+  tryCatch({
+    plot_dp_comp_exposure(hdpsample, main_text="Exposures (excluding non-significant)",
+                         dpindices=dpindices,
+                         col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
+                         incl_nonsig = F,
+                         incl_numdata_plot = T,
+                         ylab_numdata = 'Count', ylab_exp = 'Exposure',
+                         leg.title = 'Components')
+  }, error = function(e) {})
+  tryCatch({
+    plot_dp_comp_exposure(hdpsample, main_text="Exposures (including non-significant)",
+                         dpindices=dpindices,
+                         col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
+                         incl_nonsig = T,
+                         incl_numdata_plot = T,
+                         ylab_numdata = 'Count', ylab_exp = 'Exposure',
+                         leg.title = 'Components')
+  }, error = function(e) {})
+  dev.off()
+}, error = function(e) {})
 
 
 
@@ -668,8 +675,8 @@ if(ncol(treeLayer_df) > 1){
   dev.off()
 }
 
-
 # plot exposures as boxplot
+tryCatch({
 qc_activity <- plot_hdp_exposure_boxplot(hdpsample, dpindices, component_names = components, sig_active_cutoff = sigActivity_cutoff, cohort_threshold = cohort_cutoff)
 exclude_components <- qc_activity[[2]]
 exclude_components <- as.character(sapply(exclude_components, function(x){unlist(strsplit(x, ' '))[1]}))
@@ -677,9 +684,10 @@ exclude_components <- as.character(sapply(exclude_components, function(x){unlist
 pdf(paste0(output_dir, 'componentExposures_boxplot.pdf'), width = 10, height = 4)
 qc_activity[[1]]
 dev.off()
-
+}, error = function(e) {})
 
 # reconstruction error
+
 comp_distn <- comp_categ_distn(hdpsample)
 signatures <- comp_distn$mean
 dp_distn   <- comp_dp_distn(hdpsample)
@@ -696,6 +704,7 @@ cosineSimilarity <- sapply(rownames(observed_mutLoad), function(x) cosine(as.num
 save(cosineSimilarity, RMSE, nRMSE, file = paste0(output_dir, "reconstructionError.RData"))
 
 #plot reconstruction error
+tryCatch({
 plot_data <- rbind(data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity'),
                    data.frame(sample = names(nRMSE), value = as.numeric(nRMSE), type = 'nRMSE'),
                    data.frame(sample = names(RMSE), value = as.numeric(RMSE), type = 'RMSE'))
@@ -716,7 +725,7 @@ p <- ggplot(plot_data, aes(x = sample, y = value, fill = type)) +
 pdf(paste0(output_dir, "reconstructionError.pdf"), width = 10, height = 5)
 plot(p)
 dev.off()
-
+}, error = function(e) {})
 
 
 
