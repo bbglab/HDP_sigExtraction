@@ -60,7 +60,7 @@ plot_hdp_exposure_boxplot <- function(hdpsample, dpindices, component_names = NU
     exposures[nonsig[[i]],i] <- 0
   }
   
-  #add component_names if provided
+  # add component_names if provided
   if(!is.null(component_names)){
     rownames(exposures) <- component_names
   }
@@ -626,96 +626,121 @@ if(ncol(samples_input) == 48){
 }
 
 
-# plot exposures
-pdf(paste0(output_dir, 'componentExposures.pdf'), width = 15, height = 7)
-plot_dp_comp_exposure(hdpsample, main_text="Exposures (excluding non-significant)",
-                      dpindices=dpindices,
-                      col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
-                      incl_nonsig = F,
-                      incl_numdata_plot = T,
-                      ylab_numdata = 'Count', ylab_exp = 'Exposure',
-                      leg.title = 'Components')
-plot_dp_comp_exposure(hdpsample, main_text="Exposures (including non-significant)",
-                      dpindices=dpindices,
-                      col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
-                      incl_nonsig = T,
-                      incl_numdata_plot = T,
-                      ylab_numdata = 'Count', ylab_exp = 'Exposure',
-                      leg.title = 'Components')
-dev.off()
+
+tryCatch({
+  pdf(paste0(output_dir, 'componentExposures.pdf'), width = 15, height = 7)
+  tryCatch({
+    plot_dp_comp_exposure(hdpsample, main_text="Exposures (excluding non-significant)",
+                         dpindices=dpindices,
+                         col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
+                         incl_nonsig = F,
+                         incl_numdata_plot = T,
+                         ylab_numdata = 'Count', ylab_exp = 'Exposure',
+                         leg.title = 'Components')
+  }, error = function(e) {})
+  tryCatch({
+    plot_dp_comp_exposure(hdpsample, main_text="Exposures (including non-significant)",
+                         dpindices=dpindices,
+                         col= c(RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(12, "Set3")),
+                         incl_nonsig = T,
+                         incl_numdata_plot = T,
+                         ylab_numdata = 'Count', ylab_exp = 'Exposure',
+                         leg.title = 'Components')
+  }, error = function(e) {})
+  dev.off()
+}, error = function(e) {})
+
 
 
 
 # seperating samples with different parental nodes (e.g. subtypes) if used
 if(ncol(treeLayer_df) > 1){
-  p_excl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
-    if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
-    group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
-    plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = F, 
-                            component_names = components, title = "Exposures (excluding non-significant)")
-  })
+  p_excl_nonsig <- tryCatch({
+    lapply(2:ncol(treeLayer_df), function(x){
+      if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
+      group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
+      tryCatch({
+        plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = F, 
+                                component_names = components, title = "Exposures (excluding non-significant)")
+      }, error = function(e) NULL)
+    })
+  }, error = function(e) NULL)
   
-  p_incl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
-    if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
-    group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
-    plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = T, 
-                            component_names = components, title = "Exposures (including non-significant)")
-  })
+  p_incl_nonsig <- tryCatch({
+    lapply(2:ncol(treeLayer_df), function(x){
+      if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
+      group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
+      tryCatch({
+        plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = T, 
+                                component_names = components, title = "Exposures (including non-significant)")
+      }, error = function(e) NULL)
+    })
+  }, error = function(e) NULL)
   
-  pdf(paste0(output_dir, 'componentExposures_perGroup.pdf'), width = 17, height = 7)
-  print(p_excl_nonsig)
-  print(p_incl_nonsig)
-  dev.off()
+  tryCatch({
+    pdf(paste0(output_dir, 'componentExposures_perGroup.pdf'), width = 17, height = 7)
+    tryCatch({ print(p_excl_nonsig) }, error = function(e) {})
+    tryCatch({ print(p_incl_nonsig) }, error = function(e) {})
+    dev.off()
+  }, error = function(e) {})
 }
 
 
+
 # plot exposures as boxplot
-qc_activity <- plot_hdp_exposure_boxplot(hdpsample, dpindices, component_names = components, sig_active_cutoff = sigActivity_cutoff, cohort_threshold = cohort_cutoff)
+qc_activity <- tryCatch({
+  plot_hdp_exposure_boxplot(hdpsample, dpindices, component_names = components, sig_active_cutoff = sigActivity_cutoff, cohort_threshold = cohort_cutoff)
+}, error = function(e) list(NULL, NULL))
 exclude_components <- qc_activity[[2]]
 exclude_components <- as.character(sapply(exclude_components, function(x){unlist(strsplit(x, ' '))[1]}))
 
-pdf(paste0(output_dir, 'componentExposures_boxplot.pdf'), width = 10, height = 4)
-qc_activity[[1]]
-dev.off()
+tryCatch({
+  pdf(paste0(output_dir, 'componentExposures_boxplot.pdf'), width = 10, height = 4)
+  tryCatch({ qc_activity[[1]] }, error = function(e) {})
+  dev.off()
+}, error = function(e) {})
+
 
 
 # reconstruction error
-comp_distn <- comp_categ_distn(hdpsample)
-signatures <- comp_distn$mean
-dp_distn   <- comp_dp_distn(hdpsample)
-exposures  <- dp_distn$mean[dpindices,]
+tryCatch({
+  comp_distn <- comp_categ_distn(hdpsample)
+  signatures <- comp_distn$mean
+  dp_distn   <- comp_dp_distn(hdpsample)
+  exposures  <- dp_distn$mean[dpindices,]
 
-observed_mutLoad <- samples_input
-expected_mutLoad <- exposures %*% signatures
-rownames(expected_mutLoad) <- rownames(observed_mutLoad)
+  observed_mutLoad <- samples_input
+  expected_mutLoad <- exposures %*% signatures
+  rownames(expected_mutLoad) <- rownames(observed_mutLoad)
 
-RMSE  <- sapply(rownames(observed_mutLoad), function(x) rmse(as.numeric(observed_mutLoad[x,]), as.numeric(expected_mutLoad[x,])))
-nRMSE <- RMSE / rowMeans(observed_mutLoad)
-cosineSimilarity <- sapply(rownames(observed_mutLoad), function(x) cosine(as.numeric(observed_mutLoad[x,]), as.numeric(expected_mutLoad[x,])))
+  RMSE  <- sapply(rownames(observed_mutLoad), function(x) rmse(as.numeric(observed_mutLoad[x,]), as.numeric(expected_mutLoad[x,])))
+  nRMSE <- RMSE / rowMeans(observed_mutLoad)
+  cosineSimilarity <- sapply(rownames(observed_mutLoad), function(x) cosine(as.numeric(observed_mutLoad[x,]), as.numeric(expected_mutLoad[x,])))
 
-save(cosineSimilarity, RMSE, nRMSE, file = paste0(output_dir, "reconstructionError.RData"))
+  save(cosineSimilarity, RMSE, nRMSE, file = paste0(output_dir, "reconstructionError.RData"))
 
-#plot reconstruction error
-plot_data <- rbind(data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity'),
-                   data.frame(sample = names(nRMSE), value = as.numeric(nRMSE), type = 'nRMSE'),
-                   data.frame(sample = names(RMSE), value = as.numeric(RMSE), type = 'RMSE'))
+  #plot reconstruction error
+  plot_data <- rbind(data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity'),
+                     data.frame(sample = names(nRMSE), value = as.numeric(nRMSE), type = 'nRMSE'),
+                     data.frame(sample = names(RMSE), value = as.numeric(RMSE), type = 'RMSE'))
 
-order_samples <- data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity')
-order_samples <- order_samples[order(order_samples$value, decreasing = T),]
-plot_data$sample <- factor(plot_data$sample, levels = order_samples$sample)
+  order_samples <- data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity')
+  order_samples <- order_samples[order(order_samples$value, decreasing = T),]
+  plot_data$sample <- factor(plot_data$sample, levels = order_samples$sample)
 
-p <- ggplot(plot_data, aes(x = sample, y = value, fill = type)) + 
-  geom_bar(stat = 'identity') + 
-  scale_fill_manual(values = c('#fdae61', '#f46d43', '#a50026')) +
-  scale_y_continuous(expand = c(0,0)) +
-  facet_grid(type ~ ., scales = 'free_y') +
-  xlab('Patients') + ylab('') +
-  ggtitle('Reconstruction Error per Patient') +
-  theme_bw() + theme(panel.grid = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-                     legend.position = 'none')
-pdf(paste0(output_dir, "reconstructionError.pdf"), width = 10, height = 5)
-plot(p)
-dev.off()
+  p <- ggplot(plot_data, aes(x = sample, y = value, fill = type)) + 
+    geom_bar(stat = 'identity') + 
+    scale_fill_manual(values = c('#fdae61', '#f46d43', '#a50026')) +
+    scale_y_continuous(expand = c(0,0)) +
+    facet_grid(type ~ ., scales = 'free_y') +
+    xlab('Patients') + ylab('') +
+    ggtitle('Reconstruction Error per Patient') +
+    theme_bw() + theme(panel.grid = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+                       legend.position = 'none')
+  pdf(paste0(output_dir, "reconstructionError.pdf"), width = 10, height = 5)
+  tryCatch({ plot(p) }, error = function(e) {})
+  dev.off()
+}, error = function(e) {})
 
 
 
