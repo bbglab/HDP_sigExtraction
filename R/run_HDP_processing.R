@@ -72,11 +72,11 @@ plot_hdp_exposure_boxplot <- function(hdpsample, dpindices, component_names = NU
     exposures <- matrix(exposures, ncol = length(exposures), nrow = 1)
   }
 
-  print(head(exposures))
   # prepare data for plotting
   plot_data           <- reshape2::melt(exposures)
   print(head(plot_data))
   colnames(plot_data)[1:2] <- c('Component', 'Sample')
+  print(head(plot_data))
   plot_data$sig_active <- plot_data$value > sig_active_cutoff
   
   cohort_threshold_number <- cohort_threshold * ncol(exposures)
@@ -150,16 +150,10 @@ plot_hdp_exposure_group <- function(hdpsample, group_df, incl_nonsig = T, compon
     # exclude component 0
     exposures <- exposures[-1,]
   }
-  print(exposures)
-  print(dim(exposures))
+
   if (is.null(dim(exposures))) {
     exposures <- matrix(exposures, ncol = length(exposures), nrow = 1)
   }
-
-  print(exposures)
-  print(dim(exposures))
-  print(group_df$sample)
-  print(colnames(exposures))
 
   colnames(exposures) <- group_df$sample
   
@@ -627,7 +621,7 @@ if(ncol(samples_input) == 48){
 
 
 # plot exposures
-
+print("Plotting exposures per sample")
 tryCatch({
   pdf(paste0(output_dir, 'componentExposures.pdf'), width = 15, height = 7)
   tryCatch({
@@ -654,28 +648,32 @@ tryCatch({
 
 
 # seperating samples with different parental nodes (e.g. subtypes) if used
-if(ncol(treeLayer_df) > 1){
-  p_excl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
-    if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
-    group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
-    plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = F, 
-                            component_names = components, title = "Exposures (excluding non-significant)")
-  })
-  
-  p_incl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
-    if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
-    group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
-    plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = T, 
-                            component_names = components, title = "Exposures (including non-significant)")
-  })
-  
-  pdf(paste0(output_dir, 'componentExposures_perGroup.pdf'), width = 17, height = 7)
-  print(p_excl_nonsig)
-  print(p_incl_nonsig)
-  dev.off()
-}
+print("Plotting exposures per group")
+tryCatch({
+  if(ncol(treeLayer_df) > 1){
+    p_excl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
+      if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
+      group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
+      plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = F, 
+                              component_names = components, title = "Exposures (excluding non-significant)")
+    })
+    
+    p_incl_nonsig <- lapply(2:ncol(treeLayer_df), function(x){
+      if(length(unique(treeLayer_df[,x])) > 20){ return(NULL) }
+      group_df <- data.frame(dpindices = dpindices, sample = treeLayer_df$sample, group = treeLayer_df[,x])
+      plot_hdp_exposure_group(hdpsample, group_df = group_df, incl_nonsig = T, 
+                              component_names = components, title = "Exposures (including non-significant)")
+    })
+    
+    pdf(paste0(output_dir, 'componentExposures_perGroup.pdf'), width = 17, height = 7)
+    print(p_excl_nonsig)
+    print(p_incl_nonsig)
+    dev.off()
+  }
+}, error = function(e) {})
 
 # plot exposures as boxplot
+print("Plotting exposures boxplot")
 tryCatch({
 qc_activity <- plot_hdp_exposure_boxplot(hdpsample, dpindices, component_names = components, sig_active_cutoff = sigActivity_cutoff, cohort_threshold = cohort_cutoff)
 exclude_components <- qc_activity[[2]]
@@ -687,7 +685,7 @@ dev.off()
 }, error = function(e) {})
 
 # reconstruction error
-
+print("Compute reconstruction error")
 comp_distn <- comp_categ_distn(hdpsample)
 signatures <- comp_distn$mean
 dp_distn   <- comp_dp_distn(hdpsample)
@@ -704,6 +702,8 @@ cosineSimilarity <- sapply(rownames(observed_mutLoad), function(x) cosine(as.num
 save(cosineSimilarity, RMSE, nRMSE, file = paste0(output_dir, "reconstructionError.RData"))
 
 #plot reconstruction error
+print("Plotting reconstruction error")
+
 tryCatch({
 plot_data <- rbind(data.frame(sample = names(cosineSimilarity), value = as.numeric(cosineSimilarity), type = 'cosineSimilarity'),
                    data.frame(sample = names(nRMSE), value = as.numeric(nRMSE), type = 'nRMSE'),
@@ -782,6 +782,10 @@ for (i in 1:length(nonsig)){
 
 exposures       <- exposures[,!colnames(exposures) %in% c('0', exclude_components)]
 signf_exposures <- signf_exposures[,!colnames(signf_exposures) %in% c('0', exclude_components)]
+
+if (is.null(dim(signf_exposures))) {
+  signf_exposures <- matrix(signf_exposures, nrow = length(signf_exposures), ncol = 1)
+}
 
 if(priors_file != 'NA'){
   prior_names <- grep('P', colnames(exposures), value = T)
